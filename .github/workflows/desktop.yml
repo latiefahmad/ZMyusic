@@ -195,10 +195,51 @@ jobs:
         run: |
           $v = "${{ steps.version.outputs.value }}"
           New-Item -ItemType Directory -Force dist | Out-Null
+          $dist = (Resolve-Path dist).Path
           Copy-Item desktopApp/build/compose/binaries/main/msi/*.msi "dist/ZMyusic-$v-windows-x64.msi"
           Copy-Item desktopApp/build/compose/binaries/main/exe/*.exe "dist/ZMyusic-$v-windows-x64-setup.exe"
-          7z a -tzip -mx=5 "dist/ZMyusic-$v-windows-x64-portable.zip" `
-            "desktopApp/build/compose/binaries/main/app/ZMyusic/*" | Out-Null
+          # 7z stores the path it is handed, so run it from the app directory and
+          # hand it "ZMyusic". Otherwise the ZIP starts with desktopApp/build/...
+          # and extracting it does not produce a usable ZMyusic folder.
+          Push-Location desktopApp/build/compose/binaries/main/app
+          try {
+            Remove-Item "$dist/ZMyusic-$v-windows-x64-portable.zip" -ErrorAction SilentlyContinue
+            7z a -tzip -mx=5 "$dist/ZMyusic-$v-windows-x64-portable.zip" "ZMyusic" | Out-Null
+          } finally {
+            Pop-Location
+          }
+
+          # The release ZIP is the product: check what users will actually get,
+          # not just what the build directory looked like.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [IO.Compression.ZipFile]::OpenRead("$dist/ZMyusic-$v-windows-x64-portable.zip")
+          try {
+            $roots = @($zip.Entries | ForEach-Object { ($_.FullName -replace '\\', '/').Split('/')[0] } | Sort-Object -Unique)
+            if ($roots.Count -ne 1 -or $roots[0] -ne 'ZMyusic') {
+              throw "Portable ZIP must contain only ZMyusic/, found: $($roots -join ', ')"
+            }
+            $exe = @($zip.Entries | Where-Object { ($_.FullName -replace '\\', '/') -eq 'ZMyusic/ZMyusic.exe' })
+            if ($exe.Count -ne 1) {
+              throw "Portable ZIP is missing ZMyusic/ZMyusic.exe."
+            }
+            $cfg = $zip.Entries | Where-Object { ($_.FullName -replace '\\', '/') -eq 'ZMyusic/app/ZMyusic.cfg' } | Select-Object -First 1
+            if (-not $cfg) {
+              throw "Portable ZIP is missing ZMyusic/app/ZMyusic.cfg."
+            }
+            $reader = New-Object IO.StreamReader($cfg.Open())
+            try {
+              $cfgText = $reader.ReadToEnd()
+            } finally {
+              $reader.Close()
+            }
+            foreach ($flag in '-Xmx512m', '-XX:+UseG1GC', '-XX:G1PeriodicGCInterval=20000', '-XX:G1PeriodicGCSystemLoadThreshold=0') {
+              if (-not $cfgText.Contains($flag)) {
+                throw "Portable app image is missing JVM flag $flag."
+              }
+            }
+          } finally {
+            $zip.Dispose()
+          }
           Get-ChildItem dist | Format-Table Name, Length
 
       - uses: actions/upload-artifact@v4

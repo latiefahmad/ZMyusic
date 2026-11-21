@@ -26,6 +26,23 @@ if [ "$version" != "$name" ]; then
   exit 1
 fi
 
+# The Xcode project carries a second copy of the version. If it drifts, the
+# IPA is built and named with the old number even though every Gradle build is
+# correct.
+pbx="$root/ios/App/ZMyusic.xcodeproj/project.pbxproj"
+if [ -f "$pbx" ]; then
+  ios_names="$(sed -n 's/^[[:space:]]*MARKETING_VERSION = \([^;]*\);/\1/p' "$pbx" | tr -d '\r' | sort -u)"
+  ios_codes="$(sed -n 's/^[[:space:]]*CURRENT_PROJECT_VERSION = \([^;]*\);/\1/p' "$pbx" | tr -d '\r' | sort -u)"
+  if [ "$ios_names" != "$name" ]; then
+    echo "::error::iOS MARKETING_VERSION is '${ios_names:-<missing>}', but zmyusicVersionName is $name."
+    exit 1
+  fi
+  if [ "$ios_codes" != "$code" ]; then
+    echo "::error::iOS CURRENT_PROJECT_VERSION is '${ios_codes:-<missing>}', but zmyusicVersionCode is $code."
+    exit 1
+  fi
+fi
+
 # A published release is what /releases/latest serves the updater, so tagging
 # an older version afterwards would move "latest" backwards. Re-running the
 # same tag is allowed; going backwards is not.
