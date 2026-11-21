@@ -72,8 +72,12 @@ def _fg_vector(path, comment):
     print("wrote", os.path.relpath(path, ROOT))
 
 
-def _logo_vector(path, viewport_w, viewport_h, comment, pad=0.0):
-    """The Z+M as a stroked mark on a WxH viewport (used for ic_logo.xml)."""
+def _logo_vector(path, viewport_w, viewport_h, comment, pad=0.0, dp_w=None, dp_h=None):
+    """The Z+M as a stroked mark on a WxH viewport (used for ic_logo.xml).
+
+    `dp_w`/`dp_h` let a caller keep a large design viewport while declaring a
+    small intrinsic size, which is what the shared Compose resource does.
+    """
     segs = A._mark_segments_1024()
     # the mark's own ink box in the 1024 design space (stroke included)
     bx0, by0, bx1, by1 = A._mark_extent_1024()
@@ -95,13 +99,15 @@ def _logo_vector(path, viewport_w, viewport_h, comment, pad=0.0):
         f'stroke-linecap="round" stroke-linejoin="round"/>'
         for (ax, ay), (bx, by) in segs
     )
+    declared_w = round(sw) if dp_w is None else dp_w
+    declared_h = round(sh) if dp_h is None else dp_h
     xml = f'''<?xml version="1.0" encoding="utf-8"?>
 <!--
   {comment}
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="{round(sw)}dp"
-    android:height="{round(sh)}dp"
+    android:width="{declared_w}dp"
+    android:height="{declared_h}dp"
     android:viewportWidth="{int(sw)}"
     android:viewportHeight="{int(sh)}">
 {paths}
@@ -334,6 +340,11 @@ def main():
                  "The ZMyusic mark, drawn as rounded capsules so every renderer\n    (Compose, TV, Wear) shows the same shape. Tinted by the caller.")
     _logo_vector(R("wearos", "src", "main", "res", "drawable", "ic_logo.xml"), 28, 24.2,
                  "The ZMyusic mark for Wear OS.")
+    _logo_vector(R("sharedUi", "src", "commonMain", "composeResources", "drawable", "ic_logo.xml"),
+                 560, 484,
+                 "The ZMyusic mark shared by the Android, TV, Wear and desktop UIs.\n"
+                 "    Tinted by the caller.",
+                 dp_w=28, dp_h=24.2)
     _notification_vector(R("app", "src", "main", "res", "drawable", "ic_notification_logo.xml"))
     _bg_vectors()
 

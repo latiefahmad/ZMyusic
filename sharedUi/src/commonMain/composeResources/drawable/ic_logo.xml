@@ -1,23 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The ZMyusic mark, drawn as filled capsules so every renderer
-    (Compose, TV, Wear) shows the same shape. Tinted by the caller.
+  The ZMyusic mark shared by the Android, TV, Wear and desktop UIs.
+    Tinted by the caller.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="28dp"
     android:height="24.2dp"
     android:viewportWidth="560"
     android:viewportHeight="484">
-  <path
-      android:fillColor="#FFFFFFFF"
-      android:pathData="M153,84.5L151.55,71.59L147.26,59.33L140.35,48.34L131.16,39.15L120.17,32.24L107.91,27.95L95,26.5L82.09,27.95L69.83,32.24L58.84,39.15L49.65,48.34L42.74,59.33L38.45,71.59L37,84.5L37,399.5L38.45,412.41L42.74,424.67L49.65,435.66L58.84,444.85L69.83,451.76L82.09,456.05L95,457.5L107.91,456.05L120.17,451.76L131.16,444.85L140.35,435.66L147.26,424.67L151.55,412.41L153,399.5Z"/>
-  <path
-      android:fillColor="#FFFFFFFF"
-      android:pathData="M233.71,364.45L242.65,373.87L253.46,381.07L265.6,385.68L278.47,387.48L291.41,386.37L303.77,382.4L314.95,375.79L324.37,366.85L331.57,356.04L336.18,343.9L337.98,331.03L336.87,318.09L332.9,305.73L326.29,294.55L141.29,49.55L132.35,40.13L121.54,32.93L109.4,28.32L96.53,26.52L83.59,27.63L71.23,31.6L60.05,38.21L50.63,47.15L43.43,57.96L38.82,70.1L37.02,82.97L38.13,95.91L42.1,108.27L48.71,119.45Z"/>
-  <path
-      android:fillColor="#FFFFFFFF"
-      android:pathData="M511.29,119.45L517.9,108.27L521.87,95.91L522.98,82.97L521.18,70.1L516.57,57.96L509.37,47.15L499.95,38.21L488.77,31.6L476.41,27.63L463.47,26.52L450.6,28.32L438.46,32.93L427.65,40.13L418.71,49.55L233.71,294.55L227.1,305.73L223.13,318.09L222.02,331.03L223.82,343.9L228.43,356.04L235.63,366.85L245.05,375.79L256.23,382.4L268.59,386.37L281.53,387.48L294.4,385.68L306.54,381.07L317.35,373.87L326.29,364.45Z"/>
-  <path
-      android:fillColor="#FFFFFFFF"
-      android:pathData="M407,399.5L408.45,412.41L412.74,424.67L419.65,435.66L428.84,444.85L439.83,451.76L452.09,456.05L465,457.5L477.91,456.05L490.17,451.76L501.16,444.85L510.35,435.66L517.26,424.67L521.55,412.41L523,399.5L523,84.5L521.55,71.59L517.26,59.33L510.35,48.34L501.16,39.15L490.17,32.24L477.91,27.95L465,26.5L452.09,27.95L439.83,32.24L428.84,39.15L419.65,48.34L412.74,59.33L408.45,71.59L407,84.5Z"/>
+  <path d="M71.02,33.02 L240.19,33.02" fill="none" stroke="#FFFFFF" stroke-width="64.68" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M240.19,33.02 L71.02,450.98" fill="none" stroke="#FFFFFF" stroke-width="64.68" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M71.02,450.98 L240.19,450.98" fill="none" stroke="#FFFFFF" stroke-width="64.68" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M319.81,450.98 L319.81,33.02" fill="none" stroke="#FFFFFF" stroke-width="64.68" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M319.81,33.02 L404.39,317.23" fill="none" stroke="#FFFFFF" stroke-width="64.68" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M404.39,317.23 L488.98,33.02" fill="none" stroke="#FFFFFF" stroke-width="64.68" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M488.98,33.02 L488.98,450.98" fill="none" stroke="#FFFFFF" stroke-width="64.68" stroke-linecap="round" stroke-linejoin="round"/>
 </vector>
