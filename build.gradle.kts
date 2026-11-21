@@ -46,8 +46,8 @@ buildscript {
  * compares names, while Android refuses an install whose code went backwards.
  * CI checks both - see .github/scripts/verify-release-tag.sh and android.yml.
  */
-extra["zmyusicVersionCode"] = 39
-extra["zmyusicVersionName"] = "1.0.0"
+extra["zmyusicVersionCode"] = 40
+extra["zmyusicVersionName"] = "1.0.1"
 
 /*
  * Bump this by hand before cutting each sideloaded test build ("beta2",

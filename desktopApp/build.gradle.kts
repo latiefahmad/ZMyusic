@@ -56,6 +56,32 @@ val listenTogetherServer = localProperty("LISTEN_TOGETHER_SERVER")
 val lastfmApiKey = localProperty("LASTFM_API_KEY")
 val lastfmSecret = localProperty("LASTFM_SECRET")
 
+/**
+ * JVM options shared by the Compose packages and the portable launcher.
+ *
+ * They used to be written twice: the installer got the heap and G1 flags while
+ * the portable launcher did not, so the ZIP silently ran with the JVM's default
+ * maximum heap (4 GB on a typical machine) and committed hundreds of megabytes
+ * during playback. One list keeps the two outputs in step.
+ */
+val desktopJvmArgs = buildList {
+    add("-Xmx512m")
+    add("-XX:+UseG1GC")
+    add("-XX:G1PeriodicGCInterval=20000")
+    add("-XX:G1PeriodicGCSystemLoadThreshold=0")
+    add("-Dzmyusic.version=$appVersion")
+    if (desktopModuleIndexUrl.isNotBlank()) {
+        add("-Dzmyusic.module.index=$desktopModuleIndexUrl")
+    }
+    if (lastfmApiKey.isNotBlank() && lastfmSecret.isNotBlank()) {
+        add("-Dzmyusic.lastfm.key=$lastfmApiKey")
+        add("-Dzmyusic.lastfm.secret=$lastfmSecret")
+    }
+    if (listenTogetherServer.isNotBlank()) {
+        add("-Dzmyusic.listentogether.server=$listenTogetherServer")
+    }
+}
+
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.kotlin.plugin.serialization")
@@ -391,17 +417,16 @@ val windowsPortableAssemble by tasks.registering {
     val stage = windowsPortableDir.map { it.dir("ZMyusic") }
     val appJar = tasks.named<Jar>("jar").flatMap { it.archiveFile }
     val runtime = configurations.named("runtimeClasspath")
-    val version = appVersion
-    val moduleIndex = desktopModuleIndexUrl
-    val lastfmKey = lastfmApiKey
-    val lastfmSharedSecret = lastfmSecret
+    val jvmArgs = desktopJvmArgs
     val mainClass = composeMainClass
     // Declared, not implied.
     inputs.file(appJar)
     inputs.files(runtime)
-    inputs.property("version", version)
-    inputs.property("moduleIndex", moduleIndex)
-    inputs.property("lastfm", lastfmKey.isNotBlank())
+    inputs.property(
+        "jvmArgs",
+        jvmArgs.filterNot { it.startsWith("-Dzmyusic.lastfm.") }.joinToString("\n"),
+    )
+    inputs.property("lastfm", lastfmApiKey.isNotBlank() && lastfmSecret.isNotBlank())
     inputs.property("mainClass", mainClass)
     outputs.dir(stage)
     doLast {
@@ -421,7 +446,8 @@ val windowsPortableAssemble by tasks.registering {
 
         // `lib\*` rather than a spelled-out classpath: the wildcard is what keeps this working when
         // a dependency is added, and the JVM is what expands it.
-        File(target, "ZMyusic.bat").writeText(
+        val launcher = File(target, "ZMyusic.bat")
+        launcher.writeText(
             buildString {
                 appendLine("@echo off")
                 appendLine("setlocal")
@@ -429,15 +455,21 @@ val windowsPortableAssemble by tasks.registering {
                 appendLine("set \"HERE=%~dp0\"")
                 appendLine("set \"RUNNER=java\"")
                 appendLine("if defined JAVA_HOME set \"RUNNER=%JAVA_HOME%\\bin\\java\"")
-                append("\"%RUNNER%\" -Dzmyusic.version=$version")
-                if (moduleIndex.isNotBlank()) append(" -Dzmyusic.module.index=$moduleIndex")
-                if (lastfmKey.isNotBlank() && lastfmSharedSecret.isNotBlank()) {
-                    append(" -Dzmyusic.lastfm.key=$lastfmKey -Dzmyusic.lastfm.secret=$lastfmSharedSecret")
-                }
+                append("\"%RUNNER%\"")
+                jvmArgs.forEach { append(" \"$it\"") }
                 appendLine(" -cp \"%HERE%lib\\*\" $mainClass %*")
                 appendLine("endlocal")
             },
         )
+
+        // The ZIP is downloaded by people who never see a terminal. A launcher
+        // missing these flags is how the 700 MB playback report happened, so make
+        // the build fail instead of shipping one again.
+        val launcherText = launcher.readText()
+        val missingJvmArgs = jvmArgs.filterNot { launcherText.contains("\"$it\"") }
+        check(missingJvmArgs.isEmpty()) {
+            "windowsPortable: ZMyusic.bat is missing JVM options: ${missingJvmArgs.joinToString("; ")}"
+        }
 
         // What "it builds" is not the same as "it runs", and the difference is exactly what shipped
         // a broken archive.
@@ -493,18 +525,7 @@ val composeMainClass = "com.zmyusic.zmyusic.desktop.MainKt"
 compose.desktop {
     application {
         mainClass = composeMainClass
-        jvmArgs("-Xmx512m")
-        jvmArgs("-XX:+UseG1GC", "-XX:G1PeriodicGCInterval=20000", "-XX:G1PeriodicGCSystemLoadThreshold=0")
-        jvmArgs("-Dzmyusic.version=$appVersion")
-        if (desktopModuleIndexUrl.isNotBlank()) {
-            jvmArgs("-Dzmyusic.module.index=$desktopModuleIndexUrl")
-        }
-        if (lastfmApiKey.isNotBlank() && lastfmSecret.isNotBlank()) {
-            jvmArgs("-Dzmyusic.lastfm.key=$lastfmApiKey", "-Dzmyusic.lastfm.secret=$lastfmSecret")
-        }
-        if (listenTogetherServer.isNotBlank()) {
-            jvmArgs("-Dzmyusic.listentogether.server=$listenTogetherServer")
-        }
+        jvmArgs(*desktopJvmArgs.toTypedArray())
 
         buildTypes.release.proguard {
             isEnabled.set(false)
