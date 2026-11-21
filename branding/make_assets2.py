@@ -93,10 +93,13 @@ def _logo_vector(path, viewport_w, viewport_h, comment, pad=0.0, dp_w=None, dp_h
         return round(v * scale + oy, 2)
 
     w = round(A._mark_stroke_1024() * scale, 2)
+    # Android VectorDrawable syntax, not SVG: AAPT2 keeps un-namespaced `d`
+    # and `stroke` as raw attributes, which the platform renderer ignores.
     paths = "\n".join(
-        f'  <path d="M{X(ax)},{Y(ay)} L{X(bx)},{Y(by)}" '
-        f'fill="none" stroke="#FFFFFF" stroke-width="{w}" '
-        f'stroke-linecap="round" stroke-linejoin="round"/>'
+        f'  <path android:pathData="M{X(ax)},{Y(ay)} L{X(bx)},{Y(by)}" '
+        f'android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" '
+        f'android:strokeWidth="{w}" '
+        f'android:strokeLineCap="round" android:strokeLineJoin="round"/>'
         for (ax, ay), (bx, by) in segs
     )
     declared_w = round(sw) if dp_w is None else dp_w
